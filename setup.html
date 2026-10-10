@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurar acceso privado</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #100d19;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #20192c;
+      border-radius: 16px;
+    }
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 13px;
+      margin: 8px 0 16px;
+      border-radius: 8px;
+      border: 1px solid #665477;
+      font-size: 16px;
+    }
+    button {
+      background: #dc78ed;
+      color: #160d20;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    label { font-size: 14px; }
+    #status { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>Configurar acceso</h2>
+    <p>Esta página sirve para establecer la seguridad inicial del juego.</p>
+
+    <form id="setupForm">
+      <label for="setupSecret">Secreto de configuración de Vercel</label>
+      <input id="setupSecret" type="password" required autocomplete="off">
+
+      <label for="pin">PIN para entrar al juego</label>
+      <input id="pin" type="password" minlength="4" required autocomplete="new-password">
+
+      <label for="adminPassword">Contraseña de administrador (mínimo 12 caracteres)</label>
+      <input id="adminPassword" type="password" minlength="12" required autocomplete="new-password">
+
+      <button type="submit">Configurar acceso</button>
+    </form>
+    <p id="status" role="status"></p>
+  </main>
+
+  <script>
+    const form = document.getElementById("setupForm");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      status.textContent = "Configurando...";
+
+      const setupSecret = document.getElementById("setupSecret").value;
+      const pin = document.getElementById("pin").value;
+      const adminPassword = document.getElementById("adminPassword").value;
+
+      try {
+        const response = await fetch("/api/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "setup",
+            setupSecret,
+            pin,
+            adminPassword
+          })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.ok) {
+          status.textContent =
+            "Configuración creada. Elimina setup.html de GitHub cuando termines.";
+          form.reset();
+        } else {
+          status.textContent = result.error || "No se pudo configurar. Revisa los datos.";
+        }
+      } catch {
+        status.textContent =
+          "No se pudo conectar. Comprueba que Vercel haya publicado los cambios.";
+      }
+    });
+  </script>
+</body>
+</html>
